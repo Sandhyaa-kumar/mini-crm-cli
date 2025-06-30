@@ -4,6 +4,9 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
+         // Create DBConnection and connect to DB
+        DBConnection db = new DBConnection();
+        db.connect();
         Scanner scanner = new Scanner(System.in); // Create Scanner
         LeadService leadService = new LeadService(); // Create service object
 
