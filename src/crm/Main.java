@@ -4,14 +4,10 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-         // Create DBConnection and connect to DB
-        DBConnection db = new DBConnection();
-        db.connect();
-        Scanner scanner = new Scanner(System.in); // Create Scanner
-        LeadService leadService = new LeadService(); // Create service object
+        Scanner scanner = new Scanner(System.in);
+        LeadService leadService = new LeadService();
 
         while (true) {
-            // Menu
             System.out.println("\n MINI CLI CRM - MENU");
             System.out.println("1. Add Lead");
             System.out.println("2. View All Leads");
@@ -20,12 +16,11 @@ public class Main {
             System.out.println("5. Exit");
             System.out.print("Choose option: ");
 
-            int choice = scanner.nextInt(); // Get menu option
-            scanner.nextLine(); // Consume leftover newline
+            int choice = scanner.nextInt();
+            scanner.nextLine();
 
             switch (choice) {
                 case 1:
-                    // Input for adding lead
                     System.out.print("Enter Name: ");
                     String name = scanner.nextLine();
                     System.out.print("Enter Email: ");
@@ -40,24 +35,24 @@ public class Main {
                     break;
 
                 case 2:
-                    leadService.viewLeads(); // View all
+                    leadService.viewLeads();
                     break;
 
                 case 3:
                     System.out.print("Enter Email or Phone to search: ");
                     String key = scanner.nextLine();
-                    leadService.searchLead(key); // Search
+                    leadService.searchLead(key);
                     break;
 
                 case 4:
                     System.out.print("Enter today's date (YYYY-MM-DD): ");
                     String today = scanner.nextLine();
-                    leadService.viewTodayFollowUps(today); // Follow-ups
+                    leadService.viewTodayFollowUps(today);
                     break;
 
                 case 5:
                     System.out.println(" Exiting... Goodbye!");
-                    scanner.close(); // Close scanner properly
+                    scanner.close();
                     return;
 
                 default:

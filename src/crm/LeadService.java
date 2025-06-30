@@ -1,42 +1,47 @@
 package crm;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class LeadService {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/your_db_name";
+    private static final String URL = "jdbc:mysql://localhost:3306/mini_crm_db";
     private static final String USER = "root";
     private static final String PASS = "sandhyaa";
 
     // Add a new lead to DB
-    public void addLead(String name, String email, String phone, String followUpDate, String priority) {
-        String sql = "INSERT INTO lead (name, email, phone, followup_date, priority) VALUES (?, ?, ?, ?, ?)";
+    public void addLead(String name, String email, String phone, String followUpDate, String leadStatus) {
+        String sql = "INSERT INTO crm_leads (name, email, phone, lead_source, lead_status, follow_up_date) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection con = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement pst = con.prepareStatement(sql)) {
+
+            // You can later ask user for lead_source, for now using default "Website"
+            String leadSource = "Website";
 
             pst.setString(1, name);
             pst.setString(2, email);
             pst.setString(3, phone);
-            pst.setString(4, followUpDate);
-            pst.setString(5, priority);
+            pst.setString(4, leadSource);
+            pst.setString(5, leadStatus);
+            pst.setString(6, followUpDate);
 
             int rows = pst.executeUpdate();
             if (rows > 0) {
-                System.out.println("Lead added successfully!");
+                System.out.println("✅ Lead added successfully!");
             } else {
-                System.out.println("Failed to add lead.");
+                System.out.println("❌ Failed to add lead.");
             }
 
         } catch (SQLException e) {
+            System.out.println("❌ SQL Error while adding lead:");
             e.printStackTrace();
         }
+        System.out.println("📦 Inserting: " + name + ", " + email + ", " + phone + ", Website, " + leadStatus + ", " + followUpDate);
+
     }
 
     // View all leads from DB
     public void viewLeads() {
-        String sql = "SELECT * FROM lead";
+        String sql = "SELECT * FROM crm_leads";
         try (Connection con = DriverManager.getConnection(URL, USER, PASS);
              Statement stmt = con.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -51,13 +56,14 @@ public class LeadService {
             }
 
         } catch (SQLException e) {
+            System.out.println("❌ SQL Error while fetching leads:");
             e.printStackTrace();
         }
     }
 
     // Search lead by email or phone
     public void searchLead(String key) {
-        String sql = "SELECT * FROM lead WHERE email = ? OR phone = ?";
+        String sql = "SELECT * FROM crm_leads WHERE email = ? OR phone = ?";
         try (Connection con = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement pst = con.prepareStatement(sql)) {
 
@@ -66,20 +72,21 @@ public class LeadService {
 
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
-                    System.out.println("Lead Found:\n" + formatLead(rs));
+                    System.out.println("✅ Lead Found:\n" + formatLead(rs));
                 } else {
-                    System.out.println("Lead not found with given email/phone.");
+                    System.out.println("❌ Lead not found with given email/phone.");
                 }
             }
 
         } catch (SQLException e) {
+            System.out.println("❌ SQL Error while searching lead:");
             e.printStackTrace();
         }
     }
 
     // View leads with follow-up date = todayDate
     public void viewTodayFollowUps(String todayDate) {
-        String sql = "SELECT * FROM lead WHERE followup_date = ?";
+        String sql = "SELECT * FROM crm_leads WHERE follow_up_date = ?";
         try (Connection con = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement pst = con.prepareStatement(sql)) {
 
@@ -89,7 +96,7 @@ public class LeadService {
                 boolean any = false;
                 while (rs.next()) {
                     any = true;
-                    System.out.println("Follow-up Today: " + formatLead(rs));
+                    System.out.println("🗓️ Follow-up Today: " + formatLead(rs));
                 }
                 if (!any) {
                     System.out.println("No follow-ups for today!");
@@ -97,6 +104,7 @@ public class LeadService {
             }
 
         } catch (SQLException e) {
+            System.out.println("❌ SQL Error while checking follow-ups:");
             e.printStackTrace();
         }
     }
@@ -104,7 +112,10 @@ public class LeadService {
     // Helper method to format a lead's data from ResultSet
     private String formatLead(ResultSet rs) throws SQLException {
         return "ID: " + rs.getInt("id") + ", Name: " + rs.getString("name") +
-               ", Email: " + rs.getString("email") + ", Phone: " + rs.getString("phone") +
-               ", Follow-up Date: " + rs.getString("followup_date") + ", Priority: " + rs.getString("priority");
+                ", Email: " + rs.getString("email") + ", Phone: " + rs.getString("phone") +
+                ", Lead Source: " + rs.getString("lead_source") +
+                ", Status: " + rs.getString("lead_status") +
+                ", Follow-up Date: " + rs.getString("follow_up_date") +
+                ", Created At: " + rs.getString("created_at");
     }
 }
