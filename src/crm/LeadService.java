@@ -104,10 +104,11 @@ public class LeadService {
     }
 
     // View today's follow-ups
-    public void viewTodayFollowUps(String todayDate) {
+public void viewTodayFollowUps() {
         String sql = "SELECT * FROM crm_leads WHERE follow_up_date = ?";
         try (Connection con = DriverManager.getConnection(URL, USER, PASS);
-             PreparedStatement pst = con.prepareStatement(sql)) {
+                 PreparedStatement pst = con.prepareStatement(sql)) {
+         String todayDate = LocalDate.now().toString();
 
             pst.setString(1, todayDate);
 

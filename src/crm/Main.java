@@ -96,9 +96,7 @@ public class Main {
                     leadService.searchLead(key);
                     break;
                 case 4:
-                    System.out.print("Enter today's date (YYYY-MM-DD): ");
-                    String today = scanner.nextLine();
-                    leadService.viewTodayFollowUps(today);
+                    leadService.viewTodayFollowUps();
                     break;
                 case 5:
                     System.out.print("Enter Lead Email or Phone to convert: ");
