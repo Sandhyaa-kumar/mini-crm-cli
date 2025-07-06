@@ -104,17 +104,7 @@ public class Main {
                     leadService.convertLeadToClient(convertKey);
                     break;
                 case 6:
-                    System.out.print("Enter Email or Phone of the lead to update: ");
-                    String updateKey = scanner.nextLine();
-                    System.out.print("Enter New Name: ");
-                    String newName = scanner.nextLine();
-                    System.out.print("Enter New Phone: ");
-                    String newPhone = scanner.nextLine();
-                    System.out.print("Enter New Follow-up Date (YYYY-MM-DD): ");
-                    String newDate = scanner.nextLine();
-                    System.out.print("Enter New Lead Status (New/Contacted/Qualified): ");
-                    String newStatus = scanner.nextLine();
-                    leadService.updateLead(updateKey, newName, newPhone, newDate, newStatus);
+                    leadService.updateLead(scanner);
                     break;
                 case 7:
                     return;

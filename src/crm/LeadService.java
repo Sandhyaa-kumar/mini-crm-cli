@@ -4,6 +4,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class LeadService {
 
@@ -221,31 +222,89 @@ public void viewTodayFollowUps() {
     }
 
     // Update lead details
-    public void updateLead(String key, String newName, String newPhone, String newDate, String newStatus) {
-        String sql = "UPDATE crm_leads SET name = ?, phone = ?, follow_up_date = ?, lead_status = ? WHERE email = ? OR phone = ?";
+  public void updateLead(Scanner scanner) {
+    System.out.print("Enter Email or Phone of the lead to update: ");
+    String key = scanner.nextLine();
 
-        try (Connection con = DriverManager.getConnection(URL, USER, PASS);
-             PreparedStatement pst = con.prepareStatement(sql)) {
+    String fetchSQL = "SELECT * FROM crm_leads WHERE email = ? OR phone = ?";
+    String updateSQL = "UPDATE crm_leads SET name = ?, phone = ?, follow_up_date = ?, lead_status = ? WHERE email = ? OR phone = ?";
 
-            pst.setString(1, newName);
-            pst.setString(2, newPhone);
-            pst.setString(3, newDate);
-            pst.setString(4, newStatus);
-            pst.setString(5, key);
-            pst.setString(6, key);
+    try (Connection con = DriverManager.getConnection(URL, USER, PASS);
+         PreparedStatement fetch = con.prepareStatement(fetchSQL)) {
 
-            int rows = pst.executeUpdate();
-            if (rows > 0) {
-                System.out.println("Lead updated successfully.");
-            } else {
+        fetch.setString(1, key);
+        fetch.setString(2, key);
+
+        try (ResultSet rs = fetch.executeQuery()) {
+            if (!rs.next()) {
                 System.out.println("Lead not found.");
+                return;
             }
 
-        } catch (SQLException e) {
-            System.out.println("SQL Error while updating lead:");
-            e.printStackTrace();
+            String name = rs.getString("name");
+            String phone = rs.getString("phone");
+            String date = rs.getString("follow_up_date");
+            String status = rs.getString("lead_status");
+
+            while (true) {
+                System.out.println("\nCurrent Lead Info:");
+                System.out.println("1. Name: " + name);
+                System.out.println("2. Phone: " + phone);
+                System.out.println("3. Follow-up Date: " + date);
+                System.out.println("4. Lead Status: " + status);
+                System.out.println("5. Save and Exit");
+
+                System.out.print("Which field do you want to update ? ");
+                String choice = scanner.nextLine();
+
+                switch (choice) {
+                    case "1":
+                        System.out.print("Enter new Name: ");
+                        name = scanner.nextLine();
+                        break;
+                    case "2":
+                        System.out.print("Enter new Phone: ");
+                        phone = scanner.nextLine();
+                        break;
+                    case "3":
+                        System.out.print("Enter new Follow-up Date (YYYY-MM-DD): ");
+                        date = scanner.nextLine();
+                        break;
+                    case "4":
+                        System.out.print("Enter new Lead Status (New/Contacted/Qualified): ");
+                        status = scanner.nextLine();
+                        break;
+                    case "5":
+                        try (PreparedStatement update = con.prepareStatement(updateSQL)) {
+                            update.setString(1, name);
+                            update.setString(2, phone);
+                            update.setString(3, date);
+                            update.setString(4, status);
+                            update.setString(5, key);
+                            update.setString(6, key);
+
+                            int rows = update.executeUpdate();
+                            if (rows > 0) {
+                                System.out.println("Lead updated successfully.");
+                            } else {
+                                System.out.println("Lead not found.");
+                            }
+                        }
+                        return;
+                    default:
+                        System.out.println("Invalid option. Try again.");
+                }
+            }
+
         }
+
+    } catch (SQLException e) {
+        System.out.println("SQL Error while updating lead:");
+        e.printStackTrace();
     }
+}
+
+
 
     // Format lead for display
     private String formatLead(ResultSet rs) throws SQLException {
