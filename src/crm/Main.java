@@ -5,8 +5,7 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        DBConnection db = new DBConnection();
-        db.connect();
+        DBConnection.connect();
 
         Scanner scanner = new Scanner(System.in);
         LeadService leadService = new LeadService();
