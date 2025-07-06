@@ -3,12 +3,10 @@ package crm;
 import java.sql.*;
 
 public class ClientService {
-
     private static final String URL = "jdbc:mysql://localhost:3306/mini_crm_db";
     private static final String USER = "root";
     private static final String PASS = "sandhyaa";
 
-    // View all clients
     public void viewAllClients() {
         String sql = "SELECT * FROM crm_clients";
         try (Connection con = DriverManager.getConnection(URL, USER, PASS);
@@ -20,7 +18,6 @@ public class ClientService {
                 empty = false;
                 System.out.println(formatClient(rs));
             }
-
             if (empty) {
                 System.out.println("No clients found.");
             }
@@ -31,7 +28,6 @@ public class ClientService {
         }
     }
 
-    // Search client by email or phone
     public void searchClient(String key) {
         String sql = "SELECT * FROM crm_clients WHERE email = ? OR phone = ?";
         try (Connection con = DriverManager.getConnection(URL, USER, PASS);
@@ -44,7 +40,7 @@ public class ClientService {
                 if (rs.next()) {
                     System.out.println("Client Found:\n" + formatClient(rs));
                 } else {
-                    System.out.println("Client not found.");
+                    System.out.println("Client not found with given email/phone.");
                 }
             }
 
@@ -54,7 +50,6 @@ public class ClientService {
         }
     }
 
-    // Delete client by email or phone
     public void deleteClient(String key) {
         String sql = "DELETE FROM crm_clients WHERE email = ? OR phone = ?";
         try (Connection con = DriverManager.getConnection(URL, USER, PASS);
@@ -65,9 +60,9 @@ public class ClientService {
 
             int rows = pst.executeUpdate();
             if (rows > 0) {
-                System.out.println(" Client deleted successfully.");
+                System.out.println("Client deleted successfully.");
             } else {
-                System.out.println(" No client found with that detail.");
+                System.out.println("Client not found with given email/phone.");
             }
 
         } catch (SQLException e) {
@@ -76,13 +71,13 @@ public class ClientService {
         }
     }
 
-    // Format output for printing client
     private String formatClient(ResultSet rs) throws SQLException {
         return "ID: " + rs.getInt("id") +
-                ", Name: " + rs.getString("name") +
-                ", Email: " + rs.getString("email") +
-                ", Phone: " + rs.getString("phone") +
-                ", Converted On: " + rs.getDate("converted_on") +
-                ", Priority: " + rs.getString("priority");
+               ", Name: " + rs.getString("name") +
+               ", Email: " + rs.getString("email") +
+               ", Phone: " + rs.getString("phone") +
+               ", Priority: " + rs.getString("priority") +
+               ", Converted On: " + rs.getString("converted_on") +
+               ", Created: " + rs.getString("created_at");
     }
 }

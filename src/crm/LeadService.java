@@ -11,46 +11,43 @@ public class LeadService {
     private static final String USER = "root";
     private static final String PASS = "sandhyaa";
 
-    // Add a new lead to DB
-    public void addLead(String name, String email, String phone, String followUpDate, String leadStatus) {
+    // Add a new lead
+    public void addLead(String name, String email, String phone, String followUpDate) {
         if (name == null || name.trim().isEmpty()) {
-        System.out.println("Name cannot be empty.");
-        return;
-    }
-    if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-        System.out.println(" Invalid email format.");
-        return;
-    }
-     if (!phone.matches("^\\d{10}$")) {
-        System.out.println("Phone number must be exactly 10 digits.");
-        return;
-    }
-     LocalDate today = LocalDate.now();
-    LocalDate followDate = LocalDate.parse(followUpDate);
+            System.out.println("Name cannot be empty.");
+            return;
+        }
+        if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            System.out.println("Invalid email format.");
+            return;
+        }
+        if (!phone.matches("^\\d{10}$")) {
+            System.out.println("Phone number must be exactly 10 digits.");
+            return;
+        }
 
-    if (followDate.isBefore(today)) {
-        System.out.println(" Follow-up date must be today or in the future.");
-        return;
-    }
+        LocalDate today = LocalDate.now();
+        LocalDate followDate = LocalDate.parse(followUpDate);
+        if (followDate.isBefore(today)) {
+            System.out.println("Follow-up date must be today or in the future.");
+            return;
+        }
+
         String sql = "INSERT INTO crm_leads (name, email, phone, lead_source, lead_status, follow_up_date) VALUES (?, ?, ?, ?, ?, ?)";
+
         try (Connection con = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement pst = con.prepareStatement(sql)) {
-
-            String leadSource = "Website";
-            if (leadStatus == null || leadStatus.isEmpty()) {
-                leadStatus = "New";
-            }
 
             pst.setString(1, name);
             pst.setString(2, email);
             pst.setString(3, phone);
-            pst.setString(4, leadSource);
-            pst.setString(5, leadStatus);
+            pst.setString(4, "Website");
+            pst.setString(5, "New"); // Default status
             pst.setString(6, followUpDate);
 
             int rows = pst.executeUpdate();
             if (rows > 0) {
-                System.out.println("Lead added successfully!");
+                System.out.println("Lead added successfully.");
             } else {
                 System.out.println("Failed to add lead.");
             }
@@ -59,11 +56,9 @@ public class LeadService {
             System.out.println("SQL Error while adding lead:");
             e.printStackTrace();
         }
-
-        System.out.println(" Inserted: " + name + ", " + email + ", " + phone + ", Website, " + leadStatus + ", " + followUpDate);
     }
 
-    // View all leads from DB
+    // View all leads
     public void viewLeads() {
         String sql = "SELECT * FROM crm_leads";
         try (Connection con = DriverManager.getConnection(URL, USER, PASS);
@@ -76,7 +71,7 @@ public class LeadService {
                 System.out.println(formatLead(rs));
             }
             if (empty) {
-                System.out.println(" No leads found.");
+                System.out.println("No leads found.");
             }
 
         } catch (SQLException e) {
@@ -109,7 +104,7 @@ public class LeadService {
     }
 
     // View today's follow-ups
-    public void viewTodayFollowUps(String todayDate) {  
+    public void viewTodayFollowUps(String todayDate) {
         String sql = "SELECT * FROM crm_leads WHERE follow_up_date = ?";
         try (Connection con = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement pst = con.prepareStatement(sql)) {
@@ -120,10 +115,10 @@ public class LeadService {
                 boolean any = false;
                 while (rs.next()) {
                     any = true;
-                    System.out.println("📆 Follow-up Today: " + formatLead(rs));
+                    System.out.println("Follow-up Today: " + formatLead(rs));
                 }
                 if (!any) {
-                    System.out.println("🕊️ No follow-ups for today.");
+                    System.out.println("No follow-ups for today.");
                 }
             }
 
@@ -134,7 +129,7 @@ public class LeadService {
     }
 
     // Convert a lead to client
-   public void convertLeadToClient(String key, String date) {
+   public void convertLeadToClient(String key) {
     String fetchSQL = "SELECT * FROM crm_leads WHERE email = ? OR phone = ?";
     String insertSQL = "INSERT INTO crm_clients (name, email, phone, converted_on, priority) VALUES (?, ?, ?, ?, ?)";
     String deleteSQL = "DELETE FROM crm_leads WHERE email = ? OR phone = ?";
@@ -155,26 +150,24 @@ public class LeadService {
                 String email = rs.getString("email");
                 String phone = rs.getString("phone");
                 String priority = rs.getString("lead_status");
+                String today = LocalDate.now().toString();
 
-                // Insert into client table
                 insert.setString(1, name);
                 insert.setString(2, email);
                 insert.setString(3, phone);
-                insert.setString(4, date);
+                insert.setString(4, today); // auto date
                 insert.setString(5, priority);
                 insert.executeUpdate();
 
-                // Update lead status to Converted
                 updateStatus.setString(1, key);
                 updateStatus.setString(2, key);
                 updateStatus.executeUpdate();
 
-                // Delete from leads
                 delete.setString(1, key);
                 delete.setString(2, key);
                 delete.executeUpdate();
 
-                System.out.println("Lead converted to client and status updated to 'Converted'.");
+                System.out.println("Lead converted to client.");
             } else {
                 System.out.println("Lead not found to convert.");
             }
@@ -186,77 +179,74 @@ public class LeadService {
     }
 }
 
-    // Auto-snooze missed follow-ups (set to next day)
-public void autoSnoozeMissedFollowUps() {
-    String selectSql = "SELECT * FROM crm_leads WHERE follow_up_date < CURDATE()";
-    String updateSql = "UPDATE crm_leads SET follow_up_date = DATE_ADD(CURDATE(), INTERVAL 1 DAY) WHERE id = ?";
 
-    try (Connection con = DriverManager.getConnection(URL, USER, PASS);
-         PreparedStatement selectPst = con.prepareStatement(selectSql);
-         ResultSet rs = selectPst.executeQuery()) {
+    // Auto-snooze missed follow-ups
+    public void autoSnoozeMissedFollowUps() {
+        String selectSql = "SELECT * FROM crm_leads WHERE follow_up_date < CURDATE()";
+        String updateSql = "UPDATE crm_leads SET follow_up_date = DATE_ADD(CURDATE(), INTERVAL 1 DAY) WHERE id = ?";
 
-        List<String> snoozedLeads = new ArrayList<>();
-        int count = 0;
+        try (Connection con = DriverManager.getConnection(URL, USER, PASS);
+             PreparedStatement selectPst = con.prepareStatement(selectSql);
+             ResultSet rs = selectPst.executeQuery()) {
 
-        while (rs.next()) {
-            int leadId = rs.getInt("id");
+            List<String> snoozedLeads = new ArrayList<>();
+            int count = 0;
 
-            // Store lead details to print later
-            snoozedLeads.add("Lead " + (count + 1) + ": " + formatLead(rs));
+            while (rs.next()) {
+                int leadId = rs.getInt("id");
+                snoozedLeads.add("Lead " + (count + 1) + ": " + formatLead(rs));
 
-            // Update follow-up date to tomorrow
-            try (PreparedStatement updatePst = con.prepareStatement(updateSql)) {
-                updatePst.setInt(1, leadId);
-                updatePst.executeUpdate();
-                count++;
+                try (PreparedStatement updatePst = con.prepareStatement(updateSql)) {
+                    updatePst.setInt(1, leadId);
+                    updatePst.executeUpdate();
+                    count++;
+                }
             }
-        }
 
-        if (count == 0) {
-            System.out.println("No missed follow-ups today.");
-        } else {
-            System.out.println(" Auto-snoozed leads with missed follow-ups:");
-            for (String lead : snoozedLeads) {
-                System.out.println(lead);
+            if (count == 0) {
+                System.out.println("No missed follow-ups.");
+            } else {
+                System.out.println("Auto-snoozed missed follow-ups:");
+                for (String lead : snoozedLeads) {
+                    System.out.println(lead);
+                }
+                System.out.println("Total " + count + " leads snoozed to tomorrow.");
             }
-            System.out.println(" Total " + count + " leads snoozed to tomorrow.");
+
+        } catch (SQLException e) {
+            System.out.println("SQL Error while auto-snoozing:");
+            e.printStackTrace();
         }
-
-    } catch (SQLException e) {
-        System.out.println(" SQL Error while auto-snoozing:");
-        e.printStackTrace();
     }
-}
-//updatelead
-public void updateLead(String key, String newName, String newPhone, String newDate, String newStatus) {
-    String sql = "UPDATE crm_leads SET name = ?, phone = ?, follow_up_date = ?, lead_status = ? WHERE email = ? OR phone = ?";
 
-    try (Connection con = DriverManager.getConnection(URL, USER, PASS);
-         PreparedStatement pst = con.prepareStatement(sql)) {
+    // Update lead details
+    public void updateLead(String key, String newName, String newPhone, String newDate, String newStatus) {
+        String sql = "UPDATE crm_leads SET name = ?, phone = ?, follow_up_date = ?, lead_status = ? WHERE email = ? OR phone = ?";
 
-        pst.setString(1, newName);
-        pst.setString(2, newPhone);
-        pst.setString(3, newDate);
-        pst.setString(4, newStatus);
-        pst.setString(5, key);
-        pst.setString(6, key);
+        try (Connection con = DriverManager.getConnection(URL, USER, PASS);
+             PreparedStatement pst = con.prepareStatement(sql)) {
 
-        int rows = pst.executeUpdate();
-        if (rows > 0) {
-            System.out.println("Lead updated successfully.");
-        } else {
-            System.out.println("Lead not found.");
+            pst.setString(1, newName);
+            pst.setString(2, newPhone);
+            pst.setString(3, newDate);
+            pst.setString(4, newStatus);
+            pst.setString(5, key);
+            pst.setString(6, key);
+
+            int rows = pst.executeUpdate();
+            if (rows > 0) {
+                System.out.println("Lead updated successfully.");
+            } else {
+                System.out.println("Lead not found.");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("SQL Error while updating lead:");
+            e.printStackTrace();
         }
-
-    } catch (SQLException e) {
-        System.out.println("SQL Error while updating lead:");
-        e.printStackTrace();
     }
-}
 
-
-
-    // Format a lead from ResultSet
+    // Format lead for display
     private String formatLead(ResultSet rs) throws SQLException {
         return "ID: " + rs.getInt("id") +
                 ", Name: " + rs.getString("name") +

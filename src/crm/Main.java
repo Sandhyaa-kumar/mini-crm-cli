@@ -14,7 +14,8 @@ public class Main {
         SummaryService summaryService = new SummaryService();
 
         while (true) {
-            System.out.println("\n📋 MINI CLI CRM - MAIN MENU");
+            System.out.println("\nMINI CLI CRM - MAIN MENU");
+            System.out.println("------------------------------");
             System.out.println("1. Lead Management");
             System.out.println("2. Client Management");
             System.out.println("3. Reports & Analytics");
@@ -34,24 +35,19 @@ public class Main {
                 case 1:
                     leadSubMenu(scanner, leadService);
                     break;
-
                 case 2:
                     clientSubMenu(scanner, clientService);
                     break;
-
                 case 3:
                     reportSubMenu(scanner, summaryService);
                     break;
-
                 case 4:
                     leadService.autoSnoozeMissedFollowUps();
                     break;
-
                 case 5:
                     System.out.println("Exiting... Goodbye!");
                     scanner.close();
                     return;
-
                 default:
                     System.out.println("Invalid choice! Try again.");
             }
@@ -60,7 +56,8 @@ public class Main {
 
     private static void leadSubMenu(Scanner scanner, LeadService leadService) {
         while (true) {
-            System.out.println(" LEAD MANAGEMENT MENU");
+            System.out.println("\nLEAD MANAGEMENT MENU");
+            System.out.println("------------------------------");
             System.out.println("1. Add Lead");
             System.out.println("2. View All Leads");
             System.out.println("3. Search Lead (Email/Phone)");
@@ -88,35 +85,26 @@ public class Main {
                     String phone = scanner.nextLine();
                     System.out.print("Enter Follow-up Date (YYYY-MM-DD): ");
                     String followUpDate = scanner.nextLine();
-                    System.out.print("Enter Lead Status (New/Contacted/Qualified): ");
-                    String status = scanner.nextLine();
-                    leadService.addLead(name, email, phone, followUpDate, status);
+                    leadService.addLead(name, email, phone, followUpDate);
                     break;
-
                 case 2:
                     leadService.viewLeads();
                     break;
-
                 case 3:
                     System.out.print("Enter Email or Phone to search: ");
                     String key = scanner.nextLine();
                     leadService.searchLead(key);
                     break;
-
                 case 4:
                     System.out.print("Enter today's date (YYYY-MM-DD): ");
                     String today = scanner.nextLine();
                     leadService.viewTodayFollowUps(today);
                     break;
-
                 case 5:
                     System.out.print("Enter Lead Email or Phone to convert: ");
                     String convertKey = scanner.nextLine();
-                    System.out.print("Enter today's date (YYYY-MM-DD): ");
-                    String todayDate = scanner.nextLine();
-                    leadService.convertLeadToClient(convertKey, todayDate);
+                    leadService.convertLeadToClient(convertKey);
                     break;
-
                 case 6:
                     System.out.print("Enter Email or Phone of the lead to update: ");
                     String updateKey = scanner.nextLine();
@@ -126,14 +114,12 @@ public class Main {
                     String newPhone = scanner.nextLine();
                     System.out.print("Enter New Follow-up Date (YYYY-MM-DD): ");
                     String newDate = scanner.nextLine();
-                    System.out.print("Enter New Lead Status (New/Interested/Hot): ");
+                    System.out.print("Enter New Lead Status (New/Contacted/Qualified): ");
                     String newStatus = scanner.nextLine();
                     leadService.updateLead(updateKey, newName, newPhone, newDate, newStatus);
                     break;
-
                 case 7:
-                    return; // Back to Main Menu
-
+                    return;
                 default:
                     System.out.println("Invalid choice! Try again.");
             }
@@ -142,7 +128,8 @@ public class Main {
 
     private static void clientSubMenu(Scanner scanner, ClientService clientService) {
         while (true) {
-            System.out.println("CLIENT MANAGEMENT MENU");
+            System.out.println("\nCLIENT MANAGEMENT MENU");
+            System.out.println("------------------------------");
             System.out.println("1. View All Clients");
             System.out.println("2. Search Client (Email/Phone)");
             System.out.println("3. Delete Client");
@@ -181,7 +168,8 @@ public class Main {
 
     private static void reportSubMenu(Scanner scanner, SummaryService summaryService) {
         while (true) {
-            System.out.println("\n\uD83D\uDCC8 REPORTS & ANALYTICS MENU");
+            System.out.println("\nREPORTS & ANALYTICS MENU");
+            System.out.println("------------------------------");
             System.out.println("1. Daily CRM Summary");
             System.out.println("2. Lead Status Breakdown");
             System.out.println("3. Clients Converted in Last 7 Days");
@@ -202,18 +190,14 @@ public class Main {
                 case 1:
                     summaryService.displayDailySummary(today);
                     break;
-
                 case 2:
                     summaryService.leadStatusBreakdown();
                     break;
-
                 case 3:
                     summaryService.clientsConvertedLast7Days();
                     break;
-
                 case 4:
                     return;
-
                 default:
                     System.out.println("Invalid choice! Try again.");
             }
