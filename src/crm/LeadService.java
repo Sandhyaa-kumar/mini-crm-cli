@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 public class LeadService {
 
-    // ✅ No need for DB URL, USER, PASS here now – centralized in DBConnection
+   
 
     // Add a new lead
     public void addLead(String name, String email, String phone, String followUpDate) {
