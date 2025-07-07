@@ -8,9 +8,7 @@ import java.util.Scanner;
 
 public class LeadService {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/mini_crm_db";
-    private static final String USER = "root";
-    private static final String PASS = "sandhyaa";
+    // ✅ No need for DB URL, USER, PASS here now – centralized in DBConnection
 
     // Add a new lead
     public void addLead(String name, String email, String phone, String followUpDate) {
@@ -36,14 +34,14 @@ public class LeadService {
 
         String sql = "INSERT INTO crm_leads (name, email, phone, lead_source, lead_status, follow_up_date) VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (Connection con = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection con = DBConnection.connect();
              PreparedStatement pst = con.prepareStatement(sql)) {
 
             pst.setString(1, name);
             pst.setString(2, email);
             pst.setString(3, phone);
             pst.setString(4, "Website");
-            pst.setString(5, "New"); // Default status
+            pst.setString(5, "New");
             pst.setString(6, followUpDate);
 
             int rows = pst.executeUpdate();
@@ -62,7 +60,7 @@ public class LeadService {
     // View all leads
     public void viewLeads() {
         String sql = "SELECT * FROM crm_leads";
-        try (Connection con = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection con = DBConnection.connect();
              Statement stmt = con.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
@@ -84,7 +82,7 @@ public class LeadService {
     // Search lead by email or phone
     public void searchLead(String key) {
         String sql = "SELECT * FROM crm_leads WHERE email = ? OR phone = ?";
-        try (Connection con = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection con = DBConnection.connect();
              PreparedStatement pst = con.prepareStatement(sql)) {
 
             pst.setString(1, key);
@@ -105,12 +103,12 @@ public class LeadService {
     }
 
     // View today's follow-ups
-public void viewTodayFollowUps() {
+    public void viewTodayFollowUps() {
         String sql = "SELECT * FROM crm_leads WHERE follow_up_date = ?";
-        try (Connection con = DriverManager.getConnection(URL, USER, PASS);
-                 PreparedStatement pst = con.prepareStatement(sql)) {
-         String todayDate = LocalDate.now().toString();
+        try (Connection con = DBConnection.connect();
+             PreparedStatement pst = con.prepareStatement(sql)) {
 
+            String todayDate = LocalDate.now().toString();
             pst.setString(1, todayDate);
 
             try (ResultSet rs = pst.executeQuery()) {
@@ -131,63 +129,62 @@ public void viewTodayFollowUps() {
     }
 
     // Convert a lead to client
-   public void convertLeadToClient(String key) {
-    String fetchSQL = "SELECT * FROM crm_leads WHERE email = ? OR phone = ?";
-    String insertSQL = "INSERT INTO crm_clients (name, email, phone, converted_on, priority) VALUES (?, ?, ?, ?, ?)";
-    String deleteSQL = "DELETE FROM crm_leads WHERE email = ? OR phone = ?";
-    String updateStatusSQL = "UPDATE crm_leads SET lead_status = 'Converted' WHERE email = ? OR phone = ?";
+    public void convertLeadToClient(String key) {
+        String fetchSQL = "SELECT * FROM crm_leads WHERE email = ? OR phone = ?";
+        String insertSQL = "INSERT INTO crm_clients (name, email, phone, converted_on, priority) VALUES (?, ?, ?, ?, ?)";
+        String deleteSQL = "DELETE FROM crm_leads WHERE email = ? OR phone = ?";
+        String updateStatusSQL = "UPDATE crm_leads SET lead_status = 'Converted' WHERE email = ? OR phone = ?";
 
-    try (Connection con = DriverManager.getConnection(URL, USER, PASS);
-         PreparedStatement fetch = con.prepareStatement(fetchSQL);
-         PreparedStatement insert = con.prepareStatement(insertSQL);
-         PreparedStatement delete = con.prepareStatement(deleteSQL);
-         PreparedStatement updateStatus = con.prepareStatement(updateStatusSQL)) {
+        try (Connection con = DBConnection.connect();
+             PreparedStatement fetch = con.prepareStatement(fetchSQL);
+             PreparedStatement insert = con.prepareStatement(insertSQL);
+             PreparedStatement delete = con.prepareStatement(deleteSQL);
+             PreparedStatement updateStatus = con.prepareStatement(updateStatusSQL)) {
 
-        fetch.setString(1, key);
-        fetch.setString(2, key);
+            fetch.setString(1, key);
+            fetch.setString(2, key);
 
-        try (ResultSet rs = fetch.executeQuery()) {
-            if (rs.next()) {
-                String name = rs.getString("name");
-                String email = rs.getString("email");
-                String phone = rs.getString("phone");
-                String priority = rs.getString("lead_status");
-                String today = LocalDate.now().toString();
+            try (ResultSet rs = fetch.executeQuery()) {
+                if (rs.next()) {
+                    String name = rs.getString("name");
+                    String email = rs.getString("email");
+                    String phone = rs.getString("phone");
+                    String priority = rs.getString("lead_status");
+                    String today = LocalDate.now().toString();
 
-                insert.setString(1, name);
-                insert.setString(2, email);
-                insert.setString(3, phone);
-                insert.setString(4, today); // auto date
-                insert.setString(5, priority);
-                insert.executeUpdate();
+                    insert.setString(1, name);
+                    insert.setString(2, email);
+                    insert.setString(3, phone);
+                    insert.setString(4, today);
+                    insert.setString(5, priority);
+                    insert.executeUpdate();
 
-                updateStatus.setString(1, key);
-                updateStatus.setString(2, key);
-                updateStatus.executeUpdate();
+                    updateStatus.setString(1, key);
+                    updateStatus.setString(2, key);
+                    updateStatus.executeUpdate();
 
-                delete.setString(1, key);
-                delete.setString(2, key);
-                delete.executeUpdate();
+                    delete.setString(1, key);
+                    delete.setString(2, key);
+                    delete.executeUpdate();
 
-                System.out.println("Lead converted to client.");
-            } else {
-                System.out.println("Lead not found to convert.");
+                    System.out.println("Lead converted to client.");
+                } else {
+                    System.out.println("Lead not found to convert.");
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("SQL Error during lead conversion:");
+            e.printStackTrace();
         }
-
-    } catch (SQLException e) {
-        System.out.println("SQL Error during lead conversion:");
-        e.printStackTrace();
     }
-}
-
 
     // Auto-snooze missed follow-ups
     public void autoSnoozeMissedFollowUps() {
         String selectSql = "SELECT * FROM crm_leads WHERE follow_up_date < CURDATE()";
         String updateSql = "UPDATE crm_leads SET follow_up_date = DATE_ADD(CURDATE(), INTERVAL 1 DAY) WHERE id = ?";
 
-        try (Connection con = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection con = DBConnection.connect();
              PreparedStatement selectPst = con.prepareStatement(selectSql);
              ResultSet rs = selectPst.executeQuery()) {
 
@@ -222,89 +219,87 @@ public void viewTodayFollowUps() {
     }
 
     // Update lead details
-  public void updateLead(Scanner scanner) {
-    System.out.print("Enter Email or Phone of the lead to update: ");
-    String key = scanner.nextLine();
+    public void updateLead(Scanner scanner) {
+        System.out.print("Enter Email or Phone of the lead to update: ");
+        String key = scanner.nextLine();
 
-    String fetchSQL = "SELECT * FROM crm_leads WHERE email = ? OR phone = ?";
-    String updateSQL = "UPDATE crm_leads SET name = ?, phone = ?, follow_up_date = ?, lead_status = ? WHERE email = ? OR phone = ?";
+        String fetchSQL = "SELECT * FROM crm_leads WHERE email = ? OR phone = ?";
+        String updateSQL = "UPDATE crm_leads SET name = ?, phone = ?, follow_up_date = ?, lead_status = ? WHERE email = ? OR phone = ?";
 
-    try (Connection con = DriverManager.getConnection(URL, USER, PASS);
-         PreparedStatement fetch = con.prepareStatement(fetchSQL)) {
+        try (Connection con = DBConnection.connect();
+             PreparedStatement fetch = con.prepareStatement(fetchSQL)) {
 
-        fetch.setString(1, key);
-        fetch.setString(2, key);
+            fetch.setString(1, key);
+            fetch.setString(2, key);
 
-        try (ResultSet rs = fetch.executeQuery()) {
-            if (!rs.next()) {
-                System.out.println("Lead not found.");
-                return;
-            }
-
-            String name = rs.getString("name");
-            String phone = rs.getString("phone");
-            String date = rs.getString("follow_up_date");
-            String status = rs.getString("lead_status");
-
-            while (true) {
-                System.out.println("\nCurrent Lead Info:");
-                System.out.println("1. Name: " + name);
-                System.out.println("2. Phone: " + phone);
-                System.out.println("3. Follow-up Date: " + date);
-                System.out.println("4. Lead Status: " + status);
-                System.out.println("5. Save and Exit");
-
-                System.out.print("Which field do you want to update ? ");
-                String choice = scanner.nextLine();
-
-                switch (choice) {
-                    case "1":
-                        System.out.print("Enter new Name: ");
-                        name = scanner.nextLine();
-                        break;
-                    case "2":
-                        System.out.print("Enter new Phone: ");
-                        phone = scanner.nextLine();
-                        break;
-                    case "3":
-                        System.out.print("Enter new Follow-up Date (YYYY-MM-DD): ");
-                        date = scanner.nextLine();
-                        break;
-                    case "4":
-                        System.out.print("Enter new Lead Status (New/Contacted/Qualified): ");
-                        status = scanner.nextLine();
-                        break;
-                    case "5":
-                        try (PreparedStatement update = con.prepareStatement(updateSQL)) {
-                            update.setString(1, name);
-                            update.setString(2, phone);
-                            update.setString(3, date);
-                            update.setString(4, status);
-                            update.setString(5, key);
-                            update.setString(6, key);
-
-                            int rows = update.executeUpdate();
-                            if (rows > 0) {
-                                System.out.println("Lead updated successfully.");
-                            } else {
-                                System.out.println("Lead not found.");
-                            }
-                        }
-                        return;
-                    default:
-                        System.out.println("Invalid option. Try again.");
+            try (ResultSet rs = fetch.executeQuery()) {
+                if (!rs.next()) {
+                    System.out.println("Lead not found.");
+                    return;
                 }
+
+                String name = rs.getString("name");
+                String phone = rs.getString("phone");
+                String date = rs.getString("follow_up_date");
+                String status = rs.getString("lead_status");
+
+                while (true) {
+                    System.out.println("\nCurrent Lead Info:");
+                    System.out.println("1. Name: " + name);
+                    System.out.println("2. Phone: " + phone);
+                    System.out.println("3. Follow-up Date: " + date);
+                    System.out.println("4. Lead Status: " + status);
+                    System.out.println("5. Save and Exit");
+
+                    System.out.print("Which field do you want to update? ");
+                    String choice = scanner.nextLine();
+
+                    switch (choice) {
+                        case "1":
+                            System.out.print("Enter new Name: ");
+                            name = scanner.nextLine();
+                            break;
+                        case "2":
+                            System.out.print("Enter new Phone: ");
+                            phone = scanner.nextLine();
+                            break;
+                        case "3":
+                            System.out.print("Enter new Follow-up Date (YYYY-MM-DD): ");
+                            date = scanner.nextLine();
+                            break;
+                        case "4":
+                            System.out.print("Enter new Lead Status (New/Contacted/Qualified): ");
+                            status = scanner.nextLine();
+                            break;
+                        case "5":
+                            try (PreparedStatement update = con.prepareStatement(updateSQL)) {
+                                update.setString(1, name);
+                                update.setString(2, phone);
+                                update.setString(3, date);
+                                update.setString(4, status);
+                                update.setString(5, key);
+                                update.setString(6, key);
+
+                                int rows = update.executeUpdate();
+                                if (rows > 0) {
+                                    System.out.println("Lead updated successfully.");
+                                } else {
+                                    System.out.println("Lead not found.");
+                                }
+                            }
+                            return;
+                        default:
+                            System.out.println("Invalid option. Try again.");
+                    }
+                }
+
             }
 
+        } catch (SQLException e) {
+            System.out.println("SQL Error while updating lead:");
+            e.printStackTrace();
         }
-
-    } catch (SQLException e) {
-        System.out.println("SQL Error while updating lead:");
-        e.printStackTrace();
     }
-}
-
-
 
     // Format lead for display
     private String formatLead(ResultSet rs) throws SQLException {

@@ -53,7 +53,7 @@ public class SummaryService {
     }
 
     public void displayDailySummary(LocalDate date) {
-        System.out.println("\n📅 Daily CRM Summary for: " + date);
+        System.out.println("\nDaily CRM Summary for: " + date);
         System.out.println("---------------------------------------");
         System.out.println("Total Leads Created Today: " + getTodayLeadCount(date));
         System.out.println("Today's Follow-ups: " + getTodayFollowUpsCount(date));
@@ -62,7 +62,6 @@ public class SummaryService {
         System.out.println("New Clients Added Today: " + getTodayNewClientsCount(date));
     }
 
-    // ✅ New Feature 1: Breakdown of leads by status
     public void leadStatusBreakdown() {
         String sql = "SELECT lead_status, COUNT(*) as count FROM crm_leads GROUP BY lead_status";
 
@@ -70,7 +69,7 @@ public class SummaryService {
              PreparedStatement pst = con.prepareStatement(sql);
              ResultSet rs = pst.executeQuery()) {
 
-            System.out.println("\n📊 Lead Status Summary:");
+            System.out.println("\nLead Status Summary:");
             while (rs.next()) {
                 System.out.println("- " + rs.getString("lead_status") + ": " + rs.getInt("count"));
             }
@@ -81,7 +80,6 @@ public class SummaryService {
         }
     }
 
-    // ✅ New Feature 2: Weekly client conversion count
     public void clientsConvertedLast7Days() {
         String sql = "SELECT COUNT(*) FROM crm_clients WHERE converted_on >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
 
@@ -90,7 +88,7 @@ public class SummaryService {
              ResultSet rs = pst.executeQuery()) {
 
             if (rs.next()) {
-                System.out.println("\n✅ Clients converted in last 7 days: " + rs.getInt(1));
+                System.out.println("\nClients converted in last 7 days: " + rs.getInt(1));
             }
 
         } catch (SQLException e) {

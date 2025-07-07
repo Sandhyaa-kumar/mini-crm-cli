@@ -1,2 +1,4 @@
 *.class
 .vscode/
+# Ignore database config
+src/config.properties
